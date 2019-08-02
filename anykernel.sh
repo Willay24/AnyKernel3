@@ -29,9 +29,16 @@ patch_vbmeta_flag=auto;
 dump_boot;
 vbmeta_disable_verification;
 
-## Ensure pushed replacement files keep correct ownership/permissions
-set_perm 0 0 644 lib/modules/modules.load.recovery;
-set_perm 0 0 644 lib/modules/modules.dep;
-
 write_boot;
 ## end boot install
+
+# boot install
+#if [ -L "/dev/block/bootdevice/by-name/init_boot_a" -o -L "/dev/block/by-name/init_boot_a" ]; then
+#    split_boot # for devices with init_boot ramdisk
+#    flash_boot # for devices with init_boot ramdisk
+#else
+#    dump_boot # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
+#    write_boot # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+#fi
+## end boot install
+
