@@ -1,2 +1,7 @@
-./
-/
+# ignore stuff
+*dtb*
+dtbo.img
+Image
+*.zip*
+*.pk8
+*.pem
