@@ -25,17 +25,9 @@ patch_vbmeta_flag=auto;
 dump_boot;
 vbmeta_disable_verification;
 
-## Strip stale recovery module references — these drivers are now built into
-## the kernel (see lahaina-qgki_defconfig m->y changes), so init's attempt to
-## insmod them during recovery boot from lib/modules/modules.load.recovery
-## fails immediately and bootloops recovery. The .ko files no longer exist,
-## so remove the load-list entries; the drivers are already compiled in.
-remove_line lib/modules/modules.load.recovery fts_tp.ko;
-remove_line lib/modules/modules.load.recovery q6_pdr_dlkm.ko;
-remove_line lib/modules/modules.load.recovery q6_notifier_dlkm.ko;
-remove_line lib/modules/modules.load.recovery snd_event_dlkm.ko;
-remove_line lib/modules/modules.load.recovery apr_dlkm.ko;
-remove_line lib/modules/modules.load.recovery adsp_loader_dlkm.ko;
+## Ensure pushed replacement files keep correct ownership/permissions
+set_perm 0 0 644 lib/modules/modules.load.recovery;
+set_perm 0 0 644 lib/modules/modules.dep;
 
 write_boot;
 ## end boot install
