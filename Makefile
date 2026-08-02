@@ -1,22 +1,25 @@
 # Zip Naming
-KNAME ?= Scarlet-v1.0
-CODENAME ?= redwood
+KNAME ?= Nothing Phone 1
+CODENAME ?= Spacewar
 DATE ?= $(shell date "+%H%M")
 
 ZIP := $(KNAME)-$(CODENAME)-$(DATE)
-EXCLUDE := Makefile *.git* *.jar* *placeholder* *.md* LICENSE FUNDING.yml releasekey*
+EXCLUDE := Makefile *.git* *.jar* *placeholder* *.md*
 
 # Zipping
 zip: $(ZIP)
 $(ZIP):
 	@echo "Creating ZIP: $(ZIP)-signed.zip"
 	@zip -r9 "$@.zip" . -q -x $(EXCLUDE)
-	@echo "Signing zip with release-keys..."
-	@java -jar *.jar* releasekey.x509.pem releasekey.pk8 "$@.zip" "$@-signed.zip"
+	@echo "Signing zip with aosp keys..."
+	@java -jar *.jar* "$@.zip" "$@-signed.zip"
 	@echo "Done!"
 
 # Cleaning
 clean:
+	@rm -rf modules/vendor/lib/modules/modules.{alias,dep,softdep,load}
+	@rm -rf modules/vendor/lib/modules/*.ko
+	@rm -rf vendor_ramdisk/lib/modules/*.ko
 	@rm -rf dtbo.img
 	@rm -rf *dtb*
 	@rm -rf Image
