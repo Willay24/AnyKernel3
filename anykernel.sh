@@ -7,7 +7,7 @@ kernel.string=Spacewar by @Biased69-KittenLover
 kernel.revision=5.4
 kernel.made=Biased69-Kitty
 anykernel3.made=osm0sis @ xda-developers
-kernel.compiler=Neutron clang 24.0.0
+kernel.compiler=Slim LLVM 23.1.0
 do.devicecheck=0
 do.cleanup=1
 supported.versions=11.0-17.0
@@ -32,7 +32,10 @@ vbmeta_disable_verification;
 write_boot;
 ## end boot install
 
+ui_print "- $(strings "${AKHOME}"/Image 2>/dev/null | grep -E -m1 'Linux version.*#' | awk '{print $3}')"
+
 # boot install
+
 #if [ -L "/dev/block/bootdevice/by-name/init_boot_a" -o -L "/dev/block/by-name/init_boot_a" ]; then
 #    split_boot # for devices with init_boot ramdisk
 #    flash_boot # for devices with init_boot ramdisk
