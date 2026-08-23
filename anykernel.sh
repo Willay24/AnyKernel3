@@ -32,7 +32,10 @@ vbmeta_disable_verification;
 write_boot;
 ## end boot install
 
+ui_print "- $(strings "${AKHOME}"/Image 2>/dev/null | grep -E -m1 'Linux version.*#' | awk '{print $3}')"
+
 # boot install
+
 #if [ -L "/dev/block/bootdevice/by-name/init_boot_a" -o -L "/dev/block/by-name/init_boot_a" ]; then
 #    split_boot # for devices with init_boot ramdisk
 #    flash_boot # for devices with init_boot ramdisk
