@@ -8,6 +8,7 @@ export ZIPFILE="$3";
 BOOTMODE=false;
 ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
 $BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
+export BOOTMODE;
 
 DIR=/sdcard;
 $BOOTMODE || DIR=$(dirname "$ZIPFILE");
@@ -581,10 +582,27 @@ ui_print " ";
 ui_print "Flashing $KERNEL_STRING...";
 ash anykernel.sh;
 if [ $? != 0 ]; then
+  if [ -f ${AKHOME}/rollback_if_abort_flag -a -f ${AKHOME}/_rollback_anykernel.sh ]; then
+    ui_print " " "Rolling back boot and dtbo to previous state...";
+    ash _rollback_anykernel.sh || :;  # Ignore any errors
+    ui_print " " "Installation failed!";
+  fi;
   abort;
 fi;
 
 do_modules;
+
+if ! $BOOTMODE; then
+  if [ -f ${AKHOME}/do_backup_flag ]; then
+    if [ -f /system/bin/bootctl ]; then
+      /system/bin/bootctl is-slot-marked-successful $(/system/bin/bootctl get-active-boot-slot) || {
+        ui_print "Warning: Please keep the backup package just generated properly!";
+        ui_print "Because it may be LOST after reboot!";
+        sleep 3;
+      };
+    fi;
+  fi;
+fi;
 
 debugging;
 ui_print " ";
