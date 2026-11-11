@@ -2,7 +2,7 @@
 ## osm0sis @ xda-developers
 
 ### AnyKernel setup
-# begin properties
+# global properties
 properties() { '
 kernel.string=Spacewar by @Biased69-KittenLover
 kernel.revision=5.4
@@ -24,14 +24,14 @@ supported.patchlevels=
 supported.vendorpatchlevels=
 '; } # end properties
 
-# shell variables
-block=boot
-is_slot_device=1
-ramdisk_compression=auto
-patch_vbmeta_flag=auto
+### AnyKernel install
+## boot shell variables
+BLOCK=boot
+IS_SLOT_DEVICE=1
+RAMDISK_COMPRESSION=auto
+PATCH_VBMETA_FLAG=auto
 
-## AnyKernel methods (DO NOT CHANGE)
-# import patching functions/variables - see for reference
+# import functions/variables and setup patching - see for reference (DO NOT REMOVE)
 . tools/ak3-core.sh
 
 ########## OPTIONS ##########
@@ -50,6 +50,12 @@ ASK_CONFIRM=1
 # Variable names differ between ak3-core versions (home/bin vs AKHOME/BIN)
 [ -n "$AKHOME" ] || AKHOME=$home
 [ -n "$BIN" ] || BIN=$bin
+
+# Resolve occasional file system I/O latency issues which may cause binary
+# execution exceptions, and make sure every bundled tool is executable
+sync
+sleep 0.5
+chmod -R 755 ${AKHOME}/tools
 
 KEYCODE_UP=42
 KEYCODE_DOWN=41
@@ -173,7 +179,7 @@ rm -f ${AKHOME}/dtb ${AKHOME}/dtb.img
 
 ########## BOOT IMAGE ##########
 
-split_boot # the ramdisk is not modified, so skip unpacking it
+split_boot
 
 [ -n "$SPLITIMG" ] || SPLITIMG=$split_img
 [ -n "$SLOT" ] || SLOT=$slot
@@ -227,7 +233,7 @@ mkdir -p ${AKHOME}/_orig
 if [ -f ${AKHOME}/boot.img ]; then
 	cp ${AKHOME}/boot.img ${AKHOME}/_orig/boot.img
 else
-	dd if=$block of=${AKHOME}/_orig/boot.img 2>/dev/null
+	dd if=$BLOCK of=${AKHOME}/_orig/boot.img 2>/dev/null
 fi
 [ -s ${AKHOME}/_orig/boot.img ] || abort "! Failed to stage the stock boot image!"
 if $have_dtbo; then
@@ -329,12 +335,31 @@ fi
 
 ########## FLASH ##########
 
+# Boot image: if the split produced a ramdisk, unpack it so the core can
+# repack it (this also lets RAMDISK_COMPRESSION=auto and do.systemless take
+# effect). Otherwise the image carries only a kernel and is flashed as-is.
+# Unpacking only touches files in ${AKHOME}, so it is safe to do before the
+# rollback flag is set.
+if [ -f "${SPLITIMG}/ramdisk.cpio" ]; then
+	use_ramdisk=true
+	unpack_ramdisk
+else
+	use_ramdisk=false
+fi
+
 # From here on a failed flash is rolled back by update-binary
 # (it runs _rollback_anykernel.sh when this flag exists).
 touch ${AKHOME}/rollback_if_abort_flag
 
-flash_boot                # boot (ramdisk untouched, Magisk/KSU patching handled by the core)
-flash_generic dtbo        # no-op when the zip has no dtbo.img
+if $use_ramdisk; then
+	write_boot            # repack ramdisk + flash boot
+else
+	flash_boot            # kernel-only boot image
+fi
+unset use_ramdisk
+
+# Device tree overlay: no-op when the zip has no dtbo.img
+flash_generic dtbo
 
 # The flash itself finished: later steps must not trigger a rollback.
 rm -f ${AKHOME}/rollback_if_abort_flag
